@@ -3,6 +3,8 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 
+from parallel_coordinate_plot.utils import get_plot_style
+
 def map_string_to_int(list_of_strings: list[str]) -> dict:
     """
     Convert list of strings into dictionary that maps the unique strings to unique integers.
