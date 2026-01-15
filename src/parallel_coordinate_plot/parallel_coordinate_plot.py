@@ -3,7 +3,7 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 
-from parallel_coordinate_plot.utils import get_plot_style
+from parallel_coordinate_plot.utils import _get_plot_style
 
 def map_string_to_int(list_of_strings: list[str]) -> dict:
     """
@@ -34,7 +34,7 @@ def plot(
         content: dict[Any, list[Any]],
         legend: bool=False,
         title: str='none',
-        ylabel: str='none',
+        # ylabel: str='none',
         figsize: tuple[float, float]=(6.4,4.8),
         markersize: float=15
     ) -> None:
@@ -54,6 +54,10 @@ def plot(
     title : str, optional
         Title of the plot. 'none' gives no title to the plot.
         Defaults to 'none'.
+    figsize : tuple[float, float], optional
+        Figure size output by matplotlib. Defaults to (6.4, 4.8).
+    markersize : float, optional
+        Size of the markers. Defaults to 15.
         
     Returns:
         (matplotlib.figure.Figure): The figure which has been created.
@@ -61,9 +65,9 @@ def plot(
     """
 
     # ensure the input parameters are of the correct types and will not cause errors
-    _validate_parallel_coordinates_data(headers, content, legend, title, ylabel, figsize, markersize)
+    _validate_parallel_coordinates_data(headers, content, legend, title, figsize, markersize)
 
-    # generate a subplot with one row and the number of columns matching the number of column_headers minus one
+    # generate a subplot with one row and one less than the number of headers columns
     fig, axs = plt.subplots(
         1,
         len(headers)-1,
@@ -71,10 +75,7 @@ def plot(
         figsize=figsize
     )
 
-    if title != 'none':
-        fig.suptitle(title)
-    if ylabel != 'none':
-        axs[0].set_ylabel(ylabel)
+    for i, header in enumerate(headers):
 
     # normalize the data sets
     for i, header in enumerate(headers):
@@ -88,9 +89,8 @@ def plot(
         min_max_range = ((min_val, max_val, float(max_val - min_val)))
 
         df[header] = df[header].apply(lambda lambda_x: ((lambda_x - min_max_range[i][0]) / min_max_range[2]))
-
-    # print(df[columns])
-    for i, ax, header in enumerate(zip(axs, column_headers[:-1])):
+    
+    for i, ax, header in enumerate(zip(axs, headers[:-1])):
         ax.spines['top'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
 
@@ -99,11 +99,11 @@ def plot(
         ax.set_yticklabels(ytick_names[i])
 
         for j in range(df.shape[0]):
-            linestyle, color, marker = vis_utils.get_plot_style(j)
+            linestyle, color, marker = _get_plot_style(j)
 
             ax.plot(
                 [i,i+1],
-                [df[column_headers[i]].iloc[j],df[column_headers[i+1]].iloc[j]],
+                [df[headers[i]].iloc[j],df[headers[i+1]].iloc[j]],
                 color=color,
                 marker=marker,
                 linestyle=linestyle,
@@ -121,11 +121,16 @@ def plot(
     axx = plt.twinx(axs[-1])
     ax.set_ylim([0,1])
     
-    axx.set_xticklabels(['', column_headers[-1]]) # TODO: this '' might need to be column_headers[-2]
+    axx.set_xticklabels(['', headers[-1]])
     axx.spines['top'].set_visible(False)
     axx.spines['bottom'].set_visible(False)
     axx.set_yticks(np.linspace(0,1, len(ytick_values[-1])))
     axx.set_yticklabels(ytick_names[-1])
+
+    if title != 'none':
+        fig.suptitle(title)
+    # if ylabel != 'none':
+    #     axs[0].set_ylabel(ylabel)
 
     # Stack the subplots 
     plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0)
@@ -133,11 +138,13 @@ def plot(
     if legend:
         leg = axs[0].legend()
         leg.set_draggable(state=True)
-        leg.set_zorder(dims+1)
+        leg.set_zorder(len(headers)+1)
     
     return fig, axs
 
-def _validate_parallel_coordinates_data(headers, content, legend, title, ylabel, figsize, markersize) -> None:
+def _process_data():
+
+def _validate_parallel_coordinates_data(headers, content, legend, title, figsize, markersize) -> None:
 
     # validate the required arguments first
     if not isinstance(headers, list):
@@ -159,8 +166,8 @@ def _validate_parallel_coordinates_data(headers, content, legend, title, ylabel,
     if not isinstance(title, str):
         raise TypeError(f"'title' must be of type 'str', not '{type(title)}'")
     
-    if not isinstance(ylabel, str):
-        raise TypeError(f"'ylabel' must be of type 'str', not '{type(ylabel)}'")
+    # if not isinstance(ylabel, str):
+    #     raise TypeError(f"'ylabel' must be of type 'str', not '{type(ylabel)}'")
     
     if not isinstance(figsize, tuple):
         raise TypeError(f"'figsize' must be of type 'tuple', not '{type(figsize)}'")

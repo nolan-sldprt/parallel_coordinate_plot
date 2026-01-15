@@ -1,4 +1,4 @@
-def get_plot_style(i: int) -> tuple[str, str, str]:
+def _get_plot_style(i: int) -> tuple[str, str, str]:
     """
     Get a unique linestyle, colour, and marker for the i-th plot in a series.
 
