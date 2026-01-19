@@ -1,6 +1,7 @@
 from typing import Any
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from parallel_coordinate_plot.utils import _get_plot_style
 
@@ -85,15 +86,15 @@ def plot(
         figsize=figsize
     )
 
-    normalized_content = _normalize_data(headers, content)
+    normalized_content, header_yticks = _normalize_data(headers, content)
 
     for i, (ax, header) in enumerate(zip(axs, headers[:-1])):
         ax.spines['top'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
 
         ax.set_ylim([0,1])
-        # ax.set_yticks(np.linspace(0,1, len(ytick_values[i])))
-        # ax.set_yticklabels(ytick_names[i])
+        ax.set_yticks(np.linspace(0,1, len(header_yticks[header])))
+        ax.set_yticklabels(header_yticks[header])
 
         for j, (key, value) in enumerate(list(normalized_content.items())):
             linestyle, color, marker = _get_plot_style(j)
@@ -146,12 +147,16 @@ def _normalize_data(
 
     content = content.copy()
     
+    header_yticks: dict[Any, list[Any]] = {}
+
     for i, header in enumerate(headers):
         # check if the data is a string that needs to be mapped to integers
         if all(isinstance(entry[i], str) for entry in content.values()):
             string_to_int_map = map_string_to_int([entry[i] for entry in content.values()])
             for key in content:
                 content[key][i] = string_to_int_map[content[key][i]]
+
+                header_yticks[header] = list(string_to_int_map.keys())
 
         # check if the data is a digit that can be normalized
 
@@ -170,10 +175,13 @@ def _normalize_data(
             # normalize each entry in the data column
             for key in content:
                 content[key][i] = (float(content[key][i]) - min_val) / min_max_range
-    
-    return content
 
-def _validate_headers_content(headers: list[Any], content: dict[Any, list[Any]]) -> tuple:
+            if header not in header_yticks:
+                header_yticks[header] = np.linspace(min_val, max_val, 5).tolist()
+    
+    return content, header_yticks
+
+def _validate_headers_content(headers: list[Any], content: dict[Any, list[Any]]) -> None:
     if not isinstance(headers, list):
         raise TypeError(f"'headers' must be of type 'list', not '{type(headers)}'")
     if len(headers) == 0:
