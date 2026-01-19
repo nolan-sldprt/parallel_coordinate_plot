@@ -2,8 +2,6 @@ import pytest
 
 import parallel_coordinate_plot
 
-
-
 @pytest.mark.parametrize("input_data, expected_output",
     [
         (
@@ -30,7 +28,5 @@ import parallel_coordinate_plot
         ),
     ]
 )
-
-class ParallelCoordinatesTestCases(input_data, expected_output):
-
+def test_mapping(input_data, expected_output):
     assert parallel_coordinate_plot.map_string_to_int(input_data) == expected_output
