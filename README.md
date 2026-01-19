@@ -19,3 +19,17 @@ This project is licensed under the **Apache License 2.0** - see the [LICENSE](LI
 ### Contributing
 
 Open-source contributions are welcome. Please report an issue or submit a pull request.
+
+### Citation
+
+If you use ```parallel_coordinate_plot``` in your work, please cite it as below:
+
+```BibTex
+@software{parallel_coordinate_plot,
+    author = {Cain, Nolan},
+    license = {Apache-2.0},
+    title = {{parallel\_coordinate\_plot}},
+    url = {https://github.com/nolan-sldprt/parallel_coordinate_plot/},
+    version = {0.1.0},
+}
+```

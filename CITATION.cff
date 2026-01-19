@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "parallel_coordinate_plot"
+abstract: "A Python package for producing parallel coordinate plots."
+authors:
+  - family-names: "Cain"
+    given-names: "Nolan"
+    orcid: "https://orcid.org/0009-0009-3701-0054"
+
+version: "0.1.0"
+date-released: "TBD"
+url: "https://github.com/nolan-sldprt/parallel_coordinate_plot/"
+license: "Apache-2.0"
