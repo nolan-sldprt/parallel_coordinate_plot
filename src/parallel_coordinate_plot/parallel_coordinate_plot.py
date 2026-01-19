@@ -88,6 +88,9 @@ def plot(
 
     normalized_content, header_yticks = _normalize_data(headers, content)
 
+    axx = plt.twinx(axs[-1])
+    axs = np.append(axs, axx)
+
     for i, (ax, header) in enumerate(zip(axs, headers[:-1])):
         ax.spines['top'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
@@ -114,16 +117,6 @@ def plot(
         ax.set_xlim([i,i+1])
         ax.set_xticks([i,i+1])
         ax.set_xticklabels([headers[i], ''])
-
-    # Move the final axis' ticks to the right-hand side
-    axx = plt.twinx(axs[-1])
-    ax.set_ylim([0,1])
-    
-    axx.set_xticklabels(['', headers[-1]])
-    axx.spines['top'].set_visible(False)
-    axx.spines['bottom'].set_visible(False)
-    axx.set_yticks(np.linspace(0,1, len(list(header_yticks.values())[-1])))
-    axx.set_yticklabels(list(header_yticks.values())[-1])
 
     if title != 'none':
         fig.suptitle(title)
