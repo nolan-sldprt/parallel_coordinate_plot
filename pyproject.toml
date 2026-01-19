@@ -16,4 +16,5 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "pyqt6>=6.10.2",
+    "pytest>=9.0.2",
 ]
