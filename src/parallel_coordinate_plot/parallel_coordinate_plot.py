@@ -1,9 +1,13 @@
 from typing import Any
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 from parallel_coordinate_plot.utils import _get_plot_style
+
+__all__ = [
+    "map_string_to_int",
+    "plot",
+]
 
 def map_string_to_int(list_of_strings: list[str]) -> dict:
     """
@@ -34,7 +38,7 @@ def plot(
         content: dict[Any, list[Any]],
         legend: bool=False,
         title: str='none',
-        # ylabel: str='none',
+        ylabel: str='none',
         figsize: tuple[float, float]=(6.4,4.8),
         markersize: float=15
     ) -> None:
@@ -54,18 +58,24 @@ def plot(
     title : str, optional
         Title of the plot. 'none' gives no title to the plot.
         Defaults to 'none'.
+    ylabel : str, optional
+        Y-axis label on the left-most y-axis ofthe plot. 'none' gives no label to the y-axis.
+        Defaults to 'none'.
     figsize : tuple[float, float], optional
         Figure size output by matplotlib. Defaults to (6.4, 4.8).
     markersize : float, optional
         Size of the markers. Defaults to 15.
         
     Returns:
-        (matplotlib.figure.Figure): The figure which has been created.
-        (np.ndarray(matplotlib.axes._subplots.AxesSubplot)): The array of axes that have been plotted on
+        matplotlib.figure.Figure
+            The figure which has been created.
+        NDArray[matplotlib.axes._subplots.AxesSubplot]
+            The array of axes that have been plotted on
     """
 
     # ensure the input parameters are of the correct types and will not cause errors
-    _validate_parallel_coordinates_data(headers, content, legend, title, figsize, markersize)
+    _validate_headers_content(headers, content)
+    _validate_optional_args(legend, title, ylabel, figsize, markersize)
 
     # generate a subplot with one row and one less than the number of headers columns
     fig, axs = plt.subplots(
@@ -75,40 +85,27 @@ def plot(
         figsize=figsize
     )
 
-    for i, header in enumerate(headers):
+    normalized_content = _normalize_data(headers, content)
 
-    # normalize the data sets
-    for i, header in enumerate(headers):
-        # calculate the limits on the data
-        # min_val, max_val = min(df[header]), max(df[header])
-        min_val, max_val = min(ytick_values[i]), max(ytick_values[i])
-        if min_val == max_val:
-            min_val -= 0.5
-            max_val += 0.5
-        # TODO: might not need 'max_val', this would change the index in the denominator of the following normalization
-        min_max_range = ((min_val, max_val, float(max_val - min_val)))
-
-        df[header] = df[header].apply(lambda lambda_x: ((lambda_x - min_max_range[i][0]) / min_max_range[2]))
-    
-    for i, ax, header in enumerate(zip(axs, headers[:-1])):
+    for i, (ax, header) in enumerate(zip(axs, headers[:-1])):
         ax.spines['top'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
 
         ax.set_ylim([0,1])
-        ax.set_yticks(np.linspace(0,1, len(ytick_values[i])))
-        ax.set_yticklabels(ytick_names[i])
+        # ax.set_yticks(np.linspace(0,1, len(ytick_values[i])))
+        # ax.set_yticklabels(ytick_names[i])
 
-        for j in range(df.shape[0]):
+        for j, (key, value) in enumerate(list(normalized_content.items())):
             linestyle, color, marker = _get_plot_style(j)
 
             ax.plot(
                 [i,i+1],
-                [df[headers[i]].iloc[j],df[headers[i+1]].iloc[j]],
+                [value[i], value[i+1]],
                 color=color,
                 marker=marker,
                 linestyle=linestyle,
                 markersize=markersize,
-                label=(df['label'].iloc[j] if (('label' in df.columns) and (i == 0)) else ''),
+                label=key,
                 markerfacecolor='none',
                 clip_on=False,
             )
@@ -124,13 +121,13 @@ def plot(
     axx.set_xticklabels(['', headers[-1]])
     axx.spines['top'].set_visible(False)
     axx.spines['bottom'].set_visible(False)
-    axx.set_yticks(np.linspace(0,1, len(ytick_values[-1])))
-    axx.set_yticklabels(ytick_names[-1])
+    # axx.set_yticks(np.linspace(0,1, len(ytick_values[-1])))
+    # axx.set_yticklabels(ytick_names[-1])
 
     if title != 'none':
         fig.suptitle(title)
-    # if ylabel != 'none':
-    #     axs[0].set_ylabel(ylabel)
+    if ylabel != 'none':
+        axs[0].set_ylabel(ylabel)
 
     # Stack the subplots 
     plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0)
@@ -142,32 +139,70 @@ def plot(
     
     return fig, axs
 
-def _process_data():
+def _normalize_data(
+        headers: list[Any],
+        content: dict[Any, list[Any]]
+    ) -> tuple[dict[Any, list[Any]], dict[Any, list[Any]]]:
 
-def _validate_parallel_coordinates_data(headers, content, legend, title, figsize, markersize) -> None:
+    content = content.copy()
+    
+    for i, header in enumerate(headers):
+        # check if the data is a string that needs to be mapped to integers
+        if all(isinstance(entry[i], str) for entry in content.values()):
+            string_to_int_map = map_string_to_int([entry[i] for entry in content.values()])
+            for key in content:
+                content[key][i] = string_to_int_map[content[key][i]]
 
-    # validate the required arguments first
+        # check if the data is a digit that can be normalized
+
+
+
+
+        if all(isinstance(entry[i], (int, float)) for entry in content.values()):
+            # determine the data range
+            data_column = [float(entry[i]) for entry in content.values()]
+            min_val, max_val = min(data_column), max(data_column)
+            if min_val == max_val:
+                min_val -= 0.5
+                max_val += 0.5
+            min_max_range = max_val - min_val
+
+            # normalize each entry in the data column
+            for key in content:
+                content[key][i] = (float(content[key][i]) - min_val) / min_max_range
+    
+    return content
+
+def _validate_headers_content(headers: list[Any], content: dict[Any, list[Any]]) -> tuple:
     if not isinstance(headers, list):
         raise TypeError(f"'headers' must be of type 'list', not '{type(headers)}'")
     if len(headers) == 0:
         raise ValueError("There must be more than one-dimension to use a parallel coordinate plot")
     
-    # validate the 'content' is a list
-    if not isinstance(content, list):
-        raise TypeError(f"'content' must be of type 'list', not '{type(content)}'")
-    # validate that each item in 'content' is a valid entry
-    # TODO: get length and data types from first entry, then assume that is the status quo
-
-
-    # validate optional arguments
+    if not isinstance(content, dict):
+        raise TypeError(f"'content' must be of type 'dict', not '{type(content)}'")
+    for key in content:
+        if not isinstance(content[key], list):
+            raise TypeError(f"'content' values must be of type 'list', not '{type(content[key])}'")
+        if len(content[key]) != len(headers):
+            raise ValueError(f"Each entry in 'content' must have the same length as 'headers' ({len(headers)}), but entry '{key}' has length {len(content[key])}")
+    
+    for i, header in enumerate(headers):
+        column_types = set()
+        for entry in content.values():
+            column_types.add(type(entry[i]))
+        if len(column_types) > 1:
+            raise TypeError(f"All entries in column '{header}' (index {i}) must be of the same type, but found types: {column_types}")
+        
+def _validate_optional_args(legend, title, ylabel, figsize, markersize):
     if not isinstance(legend, bool):
         raise TypeError(f"'legend' must be of type 'bool', not '{type(legend)}'")
     
     if not isinstance(title, str):
         raise TypeError(f"'title' must be of type 'str', not '{type(title)}'")
     
-    # if not isinstance(ylabel, str):
-    #     raise TypeError(f"'ylabel' must be of type 'str', not '{type(ylabel)}'")
+    if not isinstance(ylabel, str):
+        raise TypeError(f"'ylabel' must be of type 'str', not '{type(ylabel)}'")
     
     if not isinstance(figsize, tuple):
         raise TypeError(f"'figsize' must be of type 'tuple', not '{type(figsize)}'")
@@ -178,5 +213,5 @@ def _validate_parallel_coordinates_data(headers, content, legend, title, figsize
             if not isinstance(element, float):
                 raise TypeError(f"Both elements of 'figsize' must be of type 'float', not '({type(figsize[0])}, {type(figsize[1])})'")
 
-    if not isinstance(markersize, float):
-        raise TypeError(f"'markersize' must be of type 'float', not {type(markersize)}")
+    # if not isinstance(markersize, float):
+    #     raise TypeError(f"'markersize' must be of type 'float', not {type(markersize)}")
