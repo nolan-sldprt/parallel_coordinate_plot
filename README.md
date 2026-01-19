@@ -2,6 +2,9 @@
 
 A Python package for producing parallel coordinate plots.
 
+The following example was generated using ```examples/demo.py```.
+
+![image info](./examples/animals.png)
 
 ## Rationale
 
