@@ -75,7 +75,7 @@ def plot(
 
     # ensure the input parameters are of the correct types and will not cause errors
     _validate_headers_content(headers, content)
-    _validate_optional_args(legend, title, ylabel, figsize, markersize)
+    # optional argument validation is handled by matplotlib internally
 
     # generate a subplot with one row and one less than the number of headers columns
     fig, axs = plt.subplots(
@@ -194,24 +194,3 @@ def _validate_headers_content(headers: list[Any], content: dict[Any, list[Any]])
         if len(column_types) > 1:
             raise TypeError(f"All entries in column '{header}' (index {i}) must be of the same type, but found types: {column_types}")
         
-def _validate_optional_args(legend, title, ylabel, figsize, markersize):
-    if not isinstance(legend, bool):
-        raise TypeError(f"'legend' must be of type 'bool', not '{type(legend)}'")
-    
-    if not isinstance(title, str):
-        raise TypeError(f"'title' must be of type 'str', not '{type(title)}'")
-    
-    if not isinstance(ylabel, str):
-        raise TypeError(f"'ylabel' must be of type 'str', not '{type(ylabel)}'")
-    
-    if not isinstance(figsize, tuple):
-        raise TypeError(f"'figsize' must be of type 'tuple', not '{type(figsize)}'")
-    elif len(figsize) != 2:
-        raise ValueError(f"'figsize' must be of length '2', not '{len(figsize)}'")
-    else:
-        for element in figsize:
-            if not isinstance(element, float):
-                raise TypeError(f"Both elements of 'figsize' must be of type 'float', not '({type(figsize[0])}, {type(figsize[1])})'")
-
-    # if not isinstance(markersize, float):
-    #     raise TypeError(f"'markersize' must be of type 'float', not {type(markersize)}")
