@@ -122,8 +122,8 @@ def plot(
     axx.set_xticklabels(['', headers[-1]])
     axx.spines['top'].set_visible(False)
     axx.spines['bottom'].set_visible(False)
-    # axx.set_yticks(np.linspace(0,1, len(ytick_values[-1])))
-    # axx.set_yticklabels(ytick_names[-1])
+    axx.set_yticks(np.linspace(0,1, len(list(header_yticks.values())[-1])))
+    axx.set_yticklabels(list(header_yticks.values())[-1])
 
     if title != 'none':
         fig.suptitle(title)
@@ -134,9 +134,9 @@ def plot(
     plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0)
 
     if legend:
-        leg = axs[0].legend()
+        leg = axs[len(headers)-3].legend()
         leg.set_draggable(state=True)
-        leg.set_zorder(len(headers)+1)
+        # leg.set_zorder(len(headers)+1)
     
     return fig, axs
 
@@ -159,10 +159,6 @@ def _normalize_data(
                 header_yticks[header] = list(string_to_int_map.keys())
 
         # check if the data is a digit that can be normalized
-
-
-
-
         if all(isinstance(entry[i], (int, float)) for entry in content.values()):
             # determine the data range
             data_column = [float(entry[i]) for entry in content.values()]
