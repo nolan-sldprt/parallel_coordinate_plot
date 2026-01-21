@@ -109,6 +109,8 @@ def plot(
                 clip_on=False,
             )
 
+        plt.setp(ax.get_yticklabels(), va="bottom")
+
         ax.spines['top'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
 
