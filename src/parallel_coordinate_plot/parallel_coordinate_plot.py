@@ -74,31 +74,26 @@ def plot(
             The array of axes that have been plotted on
     """
 
-    # ensure the input parameters are of the correct types and will not cause errors
+    # ensure the mandatory arguments are of the correct types and will not cause errors
     _validate_headers_content(headers, content)
     # optional argument validation is handled by matplotlib internally
 
-    # generate a subplot with one row and one less than the number of headers columns
+    # generate a subplot with one row and (one less than the number of headers) columns
     fig, axs = plt.subplots(
         1,
         len(headers)-1,
         sharey=False,
         figsize=figsize
     )
-
-    normalized_content, header_yticks = _normalize_data(headers, content)
-
+    # add an extra axis to the right side of the plot and append it to the axes array
     axx = plt.twinx(axs[-1])
     axs = np.append(axs, axx)
 
+    # preprocess the data to map non-floating point values to floats and normalize the data within [0,1]
+    normalized_content, header_yticks = _normalize_data(headers, content)
+
+    # iterate through each adjacent-axis pair and plot the data
     for i, (ax, header) in enumerate(zip(axs, headers[:-1])):
-        ax.spines['top'].set_visible(False)
-        ax.spines['bottom'].set_visible(False)
-
-        ax.set_ylim([0,1])
-        ax.set_yticks(np.linspace(0,1, len(header_yticks[header])))
-        ax.set_yticklabels(header_yticks[header])
-
         for j, (key, value) in enumerate(list(normalized_content.items())):
             linestyle, color, marker = _get_plot_style(j)
 
@@ -114,9 +109,16 @@ def plot(
                 clip_on=False,
             )
 
+        ax.spines['top'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+
+        ax.set_ylim([0,1])
+        ax.set_yticks(np.linspace(0,1, len(header_yticks[header])))
+        ax.set_yticklabels(header_yticks[header])
+
         ax.set_xlim([i,i+1])
         ax.set_xticks([i,i+1])
-        ax.set_xticklabels([headers[i], ''])
+        ax.set_xticklabels([headers[i], headers[i+1]])
 
     if title != 'none':
         fig.suptitle(title)
