@@ -133,7 +133,6 @@ def plot(
     if legend:
         leg = axs[len(headers)-3].legend()
         leg.set_draggable(state=True)
-        # leg.set_zorder(len(headers)+1)
     
     return fig, axs
 
