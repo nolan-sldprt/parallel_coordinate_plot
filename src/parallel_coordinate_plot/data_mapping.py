@@ -1,3 +1,7 @@
+from typing import Any
+
+from matplotlib.ticker import MaxNLocator
+
 class BoolMap():
     """
     Map boolean values to float values.
@@ -23,10 +27,12 @@ class StringMap():
     def __init__(self, data: list[str]) -> None:
         self.mapping = self.__string_to_int(data)
 
+        self.mapped_data = [self.convert(value) for value in data]
+
         self.yticks = list(self.mapping.values())
         self.yticklabels = list(self.mapping.keys())
 
-
+    @staticmethod
     def __string_to_int(data: list[str]) -> dict:
         """
         Convert list of strings into dictionary that maps the unique strings to unique integers.
@@ -60,7 +66,7 @@ class IntMap():
 
     Parameters
     ----------
-    list_of_ints : list[int]
+    data : list[int]
         The list of all possible integer values.
 
     Returns
@@ -68,11 +74,18 @@ class IntMap():
     dict
         Dictionary mapping integer values to float values.
     """
-    def __init__(self, list_of_ints: list[int]) -> None:
-        self.mapping = self.map_int(list_of_ints)
+    def __init__(self, data: list[int]) -> None:
+        min_val, max_val, _ = self._normalize_range(data)
+        self.mapping = {value: (value - min_val) / (max_val - min_val) for value in data}
+
+        self.mapped_data = [self.convert(value) for value in data]
 
         self.yticks = list(self.mapping.values())
         self.yticklabels = list(self.mapping.keys())
+
+    @staticmethod
+    def _normalize_range(data: list[int]) -> tuple[int, int, int]:
+        return _normalize_range(data)
 
     def convert(self, value: int) -> float:
         return self.mapping[value]
@@ -87,47 +100,32 @@ class FloatMap():
         Dictionary mapping float values to float values.
     """
     def __init__(self, data: list[float]) -> None:
-        self.__min_val, self.__min_max_range = self.__normalize_range(data)
+        self.__min_val, max_val, self.__min_max_range = self._normalize_range(data)
 
-        self.yticks = []
-        self.yticklabels = []
+        self.mapping = {value: (value - self.__min_val) / self.__min_max_range for value in data}
 
-    def __normalize_range(self, data: list[float]) -> float:
-        # determine the min and max values of the column, and the range
-        min_val, max_val = min(data), max(data)
-        if min_val == max_val:
-            min_val -= 0.5
-            max_val += 0.5
-        min_max_range = max_val - min_val
+        self.mapped_data = [self.convert(value) for value in data]
 
-        return min_val, min_max_range
+        locator = MaxNLocator(nbins=5)
+        ticks = locator.tick_values(vmin=self.__min_val, vmax=max_val)
+
+        self.yticks = [self.convert(tick) for tick in ticks]
+        self.yticklabels = [ticks]
+
+    @staticmethod
+    def _normalize_range(data: list[float]) -> tuple[float, float, float]:
+        return _normalize_range(data)
 
     def convert(self, value: float) -> float:
         return (value - self.__min_val) / self.__min_max_range
 
-# def _normalize_unit(content: dict[Any, list[[int | float]]]) -> dict[Any, list[float]]:
-#     """
-#     Map string representations of integers to float values.
 
-#     Returns
-#     -------
-#     dict
-#         Dictionary mapping string representations of integers to float values.
-#     """
-#     content = content.copy()
+def _normalize_range(data: list[Any]) -> tuple[Any, Any, Any]:
+    # determine the min and max values of the column, and the range
+    min_val, max_val = min(data), max(data)
+    if min_val == max_val:
+        min_val -= 0.5
+        max_val += 0.5
+    min_max_range = max_val - min_val
 
-#     for i in range(len(content[list(content.keys())[0]])):
-#         # get the data for the i^th column
-#         data_column = [float(entry[i]) for entry in content.values()]
-
-#         # determine the min and max values of the column, and the range
-#         min_val, max_val = min(data_column), max(data_column)
-#         if min_val == max_val:
-#             min_val -= 0.5
-#             max_val += 0.5
-#         min_max_range = max_val - min_val
-
-#         # normalize each entry in the column to [0,1]
-#         # for j, key in enumerate(content.keys()):
-
-#     return {str(i): float(i) for i in range(10)}
+    return min_val, max_val, min_max_range

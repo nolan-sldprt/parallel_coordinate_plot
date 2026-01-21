@@ -3,6 +3,7 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 
+from parallel_coordinate_plot.data_mapping import BoolMap, FloatMap, IntMap, StringMap
 from parallel_coordinate_plot.utils import _get_plot_style
 
 __all__ = [
@@ -75,7 +76,7 @@ def plot(
     """
 
     # ensure the mandatory arguments are of the correct types and will not cause errors
-    _validate_headers_content(headers, content)
+    dtypes = _validate_headers_content(headers, content)
     # optional argument validation is handled by matplotlib internally
 
     # generate a subplot with one row and (one less than the number of headers) columns
@@ -90,16 +91,33 @@ def plot(
     axs = np.append(axs, axx)
 
     # preprocess the data to map non-floating point values to floats and normalize the data within [0,1]
-    normalized_content, header_yticks = _normalize_data(headers, content)
+    content_modifiers = []
+    for i, dtype in enumerate(dtypes):
+        data = [entry[i] for entry in content.values()]
+        if dtype is str:
+            content_modifiers.append(StringMap(data))
+        elif dtype is bool:
+            content_modifiers.append(BoolMap(data))
+        elif dtype is int:
+            content_modifiers.append(IntMap(data))
+        elif dtype is float:
+            content_modifiers.append(FloatMap(data))
+        else:
+            raise TypeError(f"Unsupported data type '{dtype}' found in 'content'")
+        
+        print(content_modifiers[i].mapping)
+        
+    print(len(content_modifiers))
 
     # iterate through each adjacent-axis pair and plot the data
     for i, (ax, header) in enumerate(zip(axs, headers[:-1])):
-        for j, (key, value) in enumerate(list(normalized_content.items())):
+        for j, (key, raw_value) in enumerate(list(content.items())):
+        # for j, (key, value) in enumerate(list(normalized_content.items())):
             linestyle, color, marker = _get_plot_style(j)
 
             ax.plot(
                 [i,i+1],
-                [value[i], value[i+1]],
+                [content_modifiers[i].mapped_data[j], content_modifiers[i+1].mapped_data[j]],
                 color=color,
                 marker=marker,
                 linestyle=linestyle,
@@ -115,8 +133,8 @@ def plot(
         ax.spines['bottom'].set_visible(False)
 
         ax.set_ylim([0,1])
-        ax.set_yticks(np.linspace(0,1, len(header_yticks[header])))
-        ax.set_yticklabels(header_yticks[header])
+        ax.set_yticks(np.linspace(0,1, len(content_modifiers[i].yticks)))
+        ax.set_yticklabels(content_modifiers[i].yticklabels)
 
         ax.set_xlim([i,i+1])
         ax.set_xticks([i,i+1])
@@ -173,7 +191,7 @@ def _normalize_data(
     
     return content, header_yticks
 
-def _validate_headers_content(headers: list[Any], content: dict[Any, list[Any]]) -> None:
+def _validate_headers_content(headers: list[Any], content: dict[Any, list[Any]]) -> list[Any]:
     if not isinstance(headers, list):
         raise TypeError(f"'headers' must be of type 'list', not '{type(headers)}'")
     if len(headers) == 0:
@@ -187,6 +205,7 @@ def _validate_headers_content(headers: list[Any], content: dict[Any, list[Any]])
         if len(content[key]) != len(headers):
             raise ValueError(f"Each entry in 'content' must have the same length as 'headers' ({len(headers)}), but entry '{key}' has length {len(content[key])}")
     
+    dtypes = []
     for i, header in enumerate(headers):
         column_types = set()
         for entry in content.values():
@@ -194,3 +213,6 @@ def _validate_headers_content(headers: list[Any], content: dict[Any, list[Any]])
         if len(column_types) > 1:
             raise TypeError(f"All entries in column '{header}' (index {i}) must be of the same type, but found types: {column_types}")
         
+        dtypes.append(type((list(content.values())[0][i])))
+
+    return dtypes
