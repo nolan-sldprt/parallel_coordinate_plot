@@ -44,7 +44,7 @@ def plot(
         markersize: float=15
     ) -> None:
     """
-    Generate parallel coordinate plots for a given pandas dataframe.
+    Render a parallel coordinate plot.
     
     Parameters
     ----------
