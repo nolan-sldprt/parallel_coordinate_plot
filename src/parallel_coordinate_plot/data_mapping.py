@@ -9,6 +9,9 @@ class BoolMap():
     def __init__(self, data: list[bool]) -> None:
         self.mapping = {False: 0.0, True: 1.0}
 
+        self.mapped_data = [self.convert(value) for value in data]
+        self.mapped_data.sort()
+
         self.yticks = list(self.mapping.values())
         self.yticklabels = list(self.mapping.keys())
 
@@ -28,6 +31,7 @@ class StringMap():
         self.mapping = self.__string_to_int(data)
 
         self.mapped_data = [self.convert(value) for value in data]
+        self.mapped_data = [self.mapped_data[i] / (len(self.mapping) - 1) for i in range(len(self.mapped_data))]
 
         self.yticks = list(self.mapping.values())
         self.yticklabels = list(self.mapping.keys())
@@ -56,7 +60,7 @@ class StringMap():
 
         # return a dictionary that maps the sorted unique strings to integer values from [0,n-1]
         return dict(zip(unique_strings, range(len(unique_strings))))
-        
+
     def convert(self, value: str) -> float:
         return self.mapping[value]
 
@@ -77,6 +81,7 @@ class IntMap():
     def __init__(self, data: list[int]) -> None:
         min_val, max_val, _ = self._normalize_range(data)
         self.mapping = {value: (value - min_val) / (max_val - min_val) for value in data}
+        self.mapping = dict(sorted(self.mapping.items()))
 
         self.mapped_data = [self.convert(value) for value in data]
 
@@ -103,14 +108,13 @@ class FloatMap():
         self.__min_val, max_val, self.__min_max_range = self._normalize_range(data)
 
         self.mapping = {value: (value - self.__min_val) / self.__min_max_range for value in data}
-
         self.mapped_data = [self.convert(value) for value in data]
 
         locator = MaxNLocator(nbins=5)
         ticks = locator.tick_values(vmin=self.__min_val, vmax=max_val)
 
         self.yticks = [self.convert(tick) for tick in ticks]
-        self.yticklabels = [ticks]
+        self.yticklabels = [round(tick, 6) for tick in ticks]
 
     @staticmethod
     def _normalize_range(data: list[float]) -> tuple[float, float, float]:

@@ -104,13 +104,11 @@ def plot(
             content_modifiers.append(FloatMap(data))
         else:
             raise TypeError(f"Unsupported data type '{dtype}' found in 'content'")
-        
-        print(content_modifiers[i].mapping)
-        
-    print(len(content_modifiers))
-
+    
     # iterate through each adjacent-axis pair and plot the data
     for i, (ax, header) in enumerate(zip(axs, headers[:-1])):
+        # print(f"{header}: {content_modifiers[i].mapped_data}")
+
         for j, (key, raw_value) in enumerate(list(content.items())):
         # for j, (key, value) in enumerate(list(normalized_content.items())):
             linestyle, color, marker = _get_plot_style(j)
@@ -129,16 +127,24 @@ def plot(
 
         plt.setp(ax.get_yticklabels(), va="bottom")
 
+        ax.set_xlim([i,i+1])
+        ax.set_xticks([i,i+1])
+
+        ax.set_xticklabels([headers[i], headers[i+1]])
+        
+
+    for i, ax in enumerate(axs):
+        # hide the spines between subplots
         ax.spines['top'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
+
+        # ax.set_xticklabels([headers[i], ''])
 
         ax.set_ylim([0,1])
         ax.set_yticks(np.linspace(0,1, len(content_modifiers[i].yticks)))
         ax.set_yticklabels(content_modifiers[i].yticklabels)
+        # print(content_modifiers[i].yticks)
 
-        ax.set_xlim([i,i+1])
-        ax.set_xticks([i,i+1])
-        ax.set_xticklabels([headers[i], headers[i+1]])
 
     if title != 'none':
         fig.suptitle(title)
