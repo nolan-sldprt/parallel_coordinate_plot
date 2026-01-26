@@ -17,7 +17,6 @@ class BaseMap(Generic[T]):
 
     def map_data(self, data: list[T]) -> list[float]:
         mapped_data = [self.convert(value) for value in data]
-        mapped_data.sort()
 
         return mapped_data
     
@@ -34,6 +33,11 @@ class BaseMap(Generic[T]):
 class BoolMap(BaseMap[bool]):
     """
     Map boolean values to float values.
+
+    Parameters
+    ----------
+    data : list[bool]
+        Boolean values for all data entries.
     """
     def __init__(self, data: list[bool]) -> None:
         super().__init__(data, {False: 0.0, True: 1.0})
@@ -49,6 +53,7 @@ class StringMap(BaseMap[str]):
     """
     def __init__(self, data: list[str]) -> None:
         mapping = self.__string_to_int(data)
+        print(mapping)
 
         super().__init__(data, mapping)
 
@@ -67,7 +72,6 @@ class StringMap(BaseMap[str]):
         dict
             Sorted unique string mappings to integer values.
         """
-
         # convert the list of strings to a set containing only the unique strings
         # then convert it back to a list for manipulation
         unique_strings = list(set(data))
@@ -78,9 +82,8 @@ class StringMap(BaseMap[str]):
         return dict(zip(unique_strings, range(len(unique_strings))))
 
     def map_data(self, data: list[Any]) -> list[float]:
-        mapped_data = [self.convert(value) for value in data]
+        mapped_data = super().map_data(data)
         mapped_data = [mapped_data[i] / (len(self.mapping) - 1) for i in range(len(mapped_data))]
-        # mapped_data.sort()
 
         return mapped_data
 
