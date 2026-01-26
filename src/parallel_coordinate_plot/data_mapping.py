@@ -13,14 +13,13 @@ class BaseMap(Generic[T]):
 
         self.yticks: list[float]
         self.yticklabels: list[T]
-        self.yticks, self.yticklabels = self._set_yticks(self.mapping)
+        self.yticks, self.yticklabels = self._set_yticks()
 
     def map_data(self, data: list[T]) -> list[float]:
         return [self.convert(value) for value in data]
     
-    @staticmethod
-    def _set_yticks(mapping: dict[T, float]) -> tuple[list[float], list[T]]:
-        return list(mapping.values()), list(mapping.keys())
+    def _set_yticks(self) -> tuple[list[float], list[T]]:
+        return list(self.mapping.values()), list(self.mapping.keys())
 
     def convert(self, value: T) -> float:
         return self.mapping[value]
@@ -97,14 +96,14 @@ class IntMap(BaseMap[int]):
         Dictionary mapping integer values to float values.
     """
     def __init__(self, data: list[int]) -> None:
-        min_val, max_val, _ = self._normalize_range(data)
+        min_val, max_val = self._normalize_range(data)
         mapping = {value: (value - min_val) / (max_val - min_val) for value in data}
         mapping = dict(sorted(mapping.items()))
 
         super().__init__(data, mapping)
 
     @staticmethod
-    def _normalize_range(data: list[int]) -> tuple[int, int, int]:
+    def _normalize_range(data: list[int]) -> tuple[int, int]:
         return _normalize_range(data)
 
     def convert(self, value: int) -> float:
@@ -120,31 +119,35 @@ class FloatMap(BaseMap):
         Dictionary mapping float values to float values.
     """
     def __init__(self, data: list[float]) -> None:
-        self.__min_val, max_val, self.__min_max_range = self._normalize_range(data)
-
-        self.mapping = {value: (value - self.__min_val) / self.__min_max_range for value in data}
-        self.mapped_data = [self.convert(value) for value in data]
-
-        locator = MaxNLocator(nbins='auto')
-        ticks = locator.tick_values(vmin=self.__min_val, vmax=max_val)
-
-        self.yticks = [self.convert(tick) for tick in ticks]
-        self.yticklabels = [round(tick, 6) for tick in ticks]
+        self.__min_val, self.__max_val = self._normalize_range(data)
+        mapping = {value: (value - self.__min_val) / (self.__max_val - self.__min_val) for value in data}
+        
+        super().__init__(data, mapping)
 
     @staticmethod
     def _normalize_range(data: list[float]) -> tuple[float, float, float]:
         return _normalize_range(data)
+    
+    def map_data(self, data):
+        return [self.convert(value) for value in data]
+
+    def _set_yticks(self) -> tuple[list[float], list[T]]:
+        locator = MaxNLocator(nbins='auto')
+        ticks = locator.tick_values(vmin=self.__min_val, vmax=self.__max_val)
+
+        yticks = [self.convert(tick) for tick in ticks]
+        yticklabels = [round(tick, 6) for tick in ticks]
+
+        return yticks, yticklabels
 
     def convert(self, value: float) -> float:
-        return (value - self.__min_val) / self.__min_max_range
+        return (value - self.__min_val) / (self.__max_val - self.__min_val)
 
-
-def _normalize_range(data: list[Any]) -> tuple[Any, Any, Any]:
+def _normalize_range(data: list[Any]) -> tuple[Any, Any]:
     # determine the min and max values of the column, and the range
     min_val, max_val = min(data), max(data)
     if min_val == max_val:
         min_val -= 0.5
         max_val += 0.5
-    min_max_range = max_val - min_val
 
-    return min_val, max_val, min_max_range
+    return min_val, max_val
