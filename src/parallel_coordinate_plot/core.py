@@ -1,4 +1,4 @@
-from typing import Any, Generic, TypeVar
+from typing import TypeVar
 
 T = TypeVar('T', bool, int, str, float)
 
