@@ -1,40 +1,56 @@
-from typing import Any
-
+from typing import Any, Generic
 from matplotlib.ticker import MaxNLocator
 
-class BoolMap():
+from parallel_coordinate_plot.core import T
+
+class BaseMap(Generic[T]):
+    """
+    Base class for mapping data values to float values.
+    """
+    def __init__(self, data: list[T], mapping: dict[T, float]) -> None:
+        self.mapping: dict[T, float] = mapping
+        self.mapped_data: list[float] = self.map_data(data)
+
+        self.yticks: list[float]
+        self.yticklabels: list[T]
+        self.yticks, self.yticklabels = self._set_yticks(self.mapping)
+
+    def map_data(self, data: list[T]) -> list[float]:
+        mapped_data = [self.convert(value) for value in data]
+        mapped_data.sort()
+
+        return mapped_data
+    
+    @staticmethod
+    def _set_yticks(mapping) -> None:
+        yticks: list[float] = list(mapping.values())
+        yticklabels: list[T] = list(mapping.keys())
+
+        return yticks, yticklabels
+
+    def convert(self, value: T) -> float:
+        return self.mapping[value]
+
+class BoolMap(BaseMap[bool]):
     """
     Map boolean values to float values.
     """
     def __init__(self, data: list[bool]) -> None:
-        self.mapping = {False: 0.0, True: 1.0}
+        super().__init__(data, {False: 0.0, True: 1.0})
 
-        self.mapped_data = [self.convert(value) for value in data]
-        self.mapped_data.sort()
-
-        self.yticks = list(self.mapping.values())
-        self.yticklabels = list(self.mapping.keys())
-
-    def convert(self, value: bool) -> float:
-        return self.mapping[value]
-
-class StringMap():
+class StringMap(BaseMap[str]):
     """
     Map string values to float values.
 
     Parameters
     ----------
-    list_of_strings : list[str]
-        The list of all possible string values.
+    data : list[str]
+        String values for all data entries.
     """
     def __init__(self, data: list[str]) -> None:
-        self.mapping = self.__string_to_int(data)
+        mapping = self.__string_to_int(data)
 
-        self.mapped_data = [self.convert(value) for value in data]
-        self.mapped_data = [self.mapped_data[i] / (len(self.mapping) - 1) for i in range(len(self.mapped_data))]
-
-        self.yticks = list(self.mapping.values())
-        self.yticklabels = list(self.mapping.keys())
+        super().__init__(data, mapping)
 
     @staticmethod
     def __string_to_int(data: list[str]) -> dict:
@@ -61,10 +77,14 @@ class StringMap():
         # return a dictionary that maps the sorted unique strings to integer values from [0,n-1]
         return dict(zip(unique_strings, range(len(unique_strings))))
 
-    def convert(self, value: str) -> float:
-        return self.mapping[value]
+    def map_data(self, data: list[Any]) -> list[float]:
+        mapped_data = [self.convert(value) for value in data]
+        mapped_data = [mapped_data[i] / (len(self.mapping) - 1) for i in range(len(mapped_data))]
+        # mapped_data.sort()
 
-class IntMap():
+        return mapped_data
+
+class IntMap(BaseMap):
     """
     Map integer values to float values.
 
@@ -95,7 +115,7 @@ class IntMap():
     def convert(self, value: int) -> float:
         return self.mapping[value]
 
-class FloatMap():
+class FloatMap(BaseMap):
     """
     Map float values to float values.
 
@@ -110,7 +130,7 @@ class FloatMap():
         self.mapping = {value: (value - self.__min_val) / self.__min_max_range for value in data}
         self.mapped_data = [self.convert(value) for value in data]
 
-        locator = MaxNLocator(nbins=5)
+        locator = MaxNLocator(nbins='auto')
         ticks = locator.tick_values(vmin=self.__min_val, vmax=max_val)
 
         self.yticks = [self.convert(tick) for tick in ticks]

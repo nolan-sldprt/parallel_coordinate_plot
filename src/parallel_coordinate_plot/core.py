@@ -1,3 +1,7 @@
+from typing import Any, Generic, TypeVar
+
+T = TypeVar('T', bool, int, str, float)
+
 def _get_plot_style(i: int) -> tuple[str, str, str]:
     """
     Get a unique linestyle, colour, and marker for the i-th plot in a series.
