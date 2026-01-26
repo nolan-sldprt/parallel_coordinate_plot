@@ -129,22 +129,23 @@ def plot(
 
         ax.set_xlim([i,i+1])
         ax.set_xticks([i,i+1])
-
-        ax.set_xticklabels([headers[i], headers[i+1]])
-        
-
+    
     for i, ax in enumerate(axs):
         # hide the spines between subplots
         ax.spines['top'].set_visible(False)
         ax.spines['bottom'].set_visible(False)
 
-        # ax.set_xticklabels([headers[i], ''])
+        if i < (len(axs) - 1):
+            if i == (len(axs) - 2):
+                xticklabels = [headers[i], headers[i+1]]
+            else:
+                xticklabels = [headers[i], '']
+
+            ax.set_xticklabels(xticklabels)
 
         ax.set_ylim([0,1])
         ax.set_yticks(np.linspace(0,1, len(content_modifiers[i].yticks)))
         ax.set_yticklabels(content_modifiers[i].yticklabels)
-        # print(content_modifiers[i].yticks)
-
 
     if title != 'none':
         fig.suptitle(title)
