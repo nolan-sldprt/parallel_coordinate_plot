@@ -16,16 +16,11 @@ class BaseMap(Generic[T]):
         self.yticks, self.yticklabels = self._set_yticks(self.mapping)
 
     def map_data(self, data: list[T]) -> list[float]:
-        mapped_data = [self.convert(value) for value in data]
-
-        return mapped_data
+        return [self.convert(value) for value in data]
     
     @staticmethod
     def _set_yticks(mapping: dict[T, float]) -> tuple[list[float], list[T]]:
-        yticks: list[float] = list(mapping.values())
-        yticklabels: list[T] = list(mapping.keys())
-
-        return yticks, yticklabels
+        return list(mapping.values()), list(mapping.keys())
 
     def convert(self, value: T) -> float:
         return self.mapping[value]
