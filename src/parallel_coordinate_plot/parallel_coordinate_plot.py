@@ -6,34 +6,6 @@ import numpy as np
 from parallel_coordinate_plot.data_mapping import BoolMap, FloatMap, IntMap, StringMap
 from parallel_coordinate_plot.core import _get_plot_style
 
-__all__ = [
-    "map_string_to_int",
-    "plot",
-]
-
-def map_string_to_int(list_of_strings: list[str]) -> dict:
-    """
-    Convert list of strings into dictionary that maps the unique strings to unique integers.
-
-    Parameters
-    ----------
-    list_of_strings : list[str]
-        The list of all possible column names.
-
-    Returns
-    -------
-    dict
-        Sorted unique string mappings to integer values.
-    """
-
-    # convert the list of strings to a set containing only the unique strings
-    # then convert it back to a list for manipulation
-    unique_strings = list(set(list_of_strings))
-    # set does not order entries deterministically, sort the list in place
-    unique_strings.sort()
-
-    # return a dictionary that maps the sorted unique strings to integer values from [0,n-1]
-    return dict(zip(unique_strings, range(len(unique_strings))))
 
 def plot(
         headers: list[Any],
@@ -76,8 +48,8 @@ def plot(
     """
 
     # ensure the mandatory arguments are of the correct types and will not cause errors
-    dtypes = _validate_headers_content(headers, content)
     # optional argument validation is handled by matplotlib internally
+    dtypes = _validate_headers_content(headers, content)
 
     # generate a subplot with one row and (one less than the number of headers) columns
     fig, axs = plt.subplots(
@@ -87,8 +59,7 @@ def plot(
         figsize=figsize
     )
     # add an extra axis to the right side of the plot and append it to the axes array
-    axx = plt.twinx(axs[-1])
-    axs = np.append(axs, axx)
+    axs = np.append(axs, plt.twinx(axs[-1]))
 
     # preprocess the data to map non-floating point values to floats and normalize the data within [0,1]
     content_modifiers = []
@@ -106,11 +77,8 @@ def plot(
             raise TypeError(f"Unsupported data type '{dtype}' found in 'content'")
     
     # iterate through each adjacent-axis pair and plot the data
-    for i, (ax, header) in enumerate(zip(axs, headers[:-1])):
-        # print(f"{header}: {content_modifiers[i].mapped_data}")
-
-        for j, (key, raw_value) in enumerate(list(content.items())):
-        # for j, (key, value) in enumerate(list(normalized_content.items())):
+    for i, ax in enumerate(axs[:-1]):
+        for j, key in enumerate(list(content.keys())):
             linestyle, color, marker = _get_plot_style(j)
 
             ax.plot(
@@ -125,6 +93,7 @@ def plot(
                 clip_on=False,
             )
 
+        # set the yticklabels to be above the ticks
         plt.setp(ax.get_yticklabels(), va="bottom")
 
         ax.set_xlim([i,i+1])
@@ -152,51 +121,17 @@ def plot(
     if ylabel != 'none':
         axs[0].set_ylabel(ylabel)
 
-    # Stack the subplots 
+    # stack the subplots horizontally
     plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1, wspace=0)
 
     if legend:
-        leg = axs[len(headers)-3].legend()
+        # for unknown reason, if the legend is placed on the second last axis,
+        # it will not be draggable
+        # place the legend on the third last axis
+        leg = axs[len(axs)-3].legend()
         leg.set_draggable(state=True)
     
     return fig, axs
-
-def _normalize_data(
-        headers: list[Any],
-        content: dict[Any, list[Any]]
-    ) -> tuple[dict[Any, list[Any]], dict[Any, list[Any]]]:
-
-    content = content.copy()
-    
-    header_yticks: dict[Any, list[Any]] = {}
-
-    for i, header in enumerate(headers):
-        # check if the data is a string that needs to be mapped to integers
-        if all(isinstance(entry[i], str) for entry in content.values()):
-            string_to_int_map = map_string_to_int([entry[i] for entry in content.values()])
-            for key in content:
-                content[key][i] = string_to_int_map[content[key][i]]
-
-                header_yticks[header] = list(string_to_int_map.keys())
-
-        # check if the data is a digit that can be normalized
-        if all(isinstance(entry[i], (int, float)) for entry in content.values()):
-            # determine the data range
-            data_column = [float(entry[i]) for entry in content.values()]
-            min_val, max_val = min(data_column), max(data_column)
-            if min_val == max_val:
-                min_val -= 0.5
-                max_val += 0.5
-            min_max_range = max_val - min_val
-
-            # normalize each entry in the data column
-            for key in content:
-                content[key][i] = (float(content[key][i]) - min_val) / min_max_range
-
-            if header not in header_yticks:
-                header_yticks[header] = np.linspace(min_val, max_val, 5).tolist()
-    
-    return content, header_yticks
 
 def _validate_headers_content(headers: list[Any], content: dict[Any, list[Any]]) -> list[Any]:
     if not isinstance(headers, list):

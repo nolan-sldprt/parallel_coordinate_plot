@@ -47,7 +47,6 @@ class StringMap(BaseMap[str]):
     """
     def __init__(self, data: list[str]) -> None:
         mapping = self.__string_to_int(data)
-        print(mapping)
 
         super().__init__(data, mapping)
 

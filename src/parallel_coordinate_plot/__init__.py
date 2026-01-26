@@ -1,1 +1,1 @@
-from parallel_coordinate_plot.parallel_coordinate_plot import *
+from parallel_coordinate_plot.parallel_coordinate_plot import plot
