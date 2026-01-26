@@ -21,7 +21,7 @@ class BaseMap(Generic[T]):
         return mapped_data
     
     @staticmethod
-    def _set_yticks(mapping) -> None:
+    def _set_yticks(mapping: dict[T, float]) -> tuple[list[float], list[T]]:
         yticks: list[float] = list(mapping.values())
         yticklabels: list[T] = list(mapping.keys())
 
