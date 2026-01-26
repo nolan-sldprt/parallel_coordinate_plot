@@ -1,40 +1,55 @@
-from typing import Any
-
+from typing import Any, Generic
 from matplotlib.ticker import MaxNLocator
 
-class BoolMap():
+from parallel_coordinate_plot.core import T
+
+class BaseMap(Generic[T]):
     """
-    Map boolean values to float values.
+    Base class for mapping data values to float values.
     """
-    def __init__(self, data: list[bool]) -> None:
-        self.mapping = {False: 0.0, True: 1.0}
+    def __init__(self, data: list[T], mapping: dict[T, float]) -> None:
+        self.mapping: dict[T, float] = mapping
+        self.mapped_data: list[float] = self.map_data(data)
 
-        self.mapped_data = [self.convert(value) for value in data]
-        self.mapped_data.sort()
+        self.yticks: list[float]
+        self.yticklabels: list[T]
+        self.yticks, self.yticklabels = self._set_yticks()
 
-        self.yticks = list(self.mapping.values())
-        self.yticklabels = list(self.mapping.keys())
+    def map_data(self, data: list[T]) -> list[float]:
+        return [self.convert(value) for value in data]
+    
+    def _set_yticks(self) -> tuple[list[float], list[T]]:
+        return list(self.mapping.values()), list(self.mapping.keys())
 
-    def convert(self, value: bool) -> float:
+    def convert(self, value: T) -> float:
         return self.mapping[value]
 
-class StringMap():
+class BoolMap(BaseMap[bool]):
+    """
+    Map boolean values to float values.
+
+    Parameters
+    ----------
+    data : list[bool]
+        Boolean values for all data entries.
+    """
+    def __init__(self, data: list[bool]) -> None:
+        super().__init__(data, {False: 0.0, True: 1.0})
+
+class StringMap(BaseMap[str]):
     """
     Map string values to float values.
 
     Parameters
     ----------
-    list_of_strings : list[str]
-        The list of all possible string values.
+    data : list[str]
+        String values for all data entries.
     """
     def __init__(self, data: list[str]) -> None:
-        self.mapping = self.__string_to_int(data)
+        mapping = self.__string_to_int(data)
+        print(mapping)
 
-        self.mapped_data = [self.convert(value) for value in data]
-        self.mapped_data = [self.mapped_data[i] / (len(self.mapping) - 1) for i in range(len(self.mapped_data))]
-
-        self.yticks = list(self.mapping.values())
-        self.yticklabels = list(self.mapping.keys())
+        super().__init__(data, mapping)
 
     @staticmethod
     def __string_to_int(data: list[str]) -> dict:
@@ -51,7 +66,6 @@ class StringMap():
         dict
             Sorted unique string mappings to integer values.
         """
-
         # convert the list of strings to a set containing only the unique strings
         # then convert it back to a list for manipulation
         unique_strings = list(set(data))
@@ -61,10 +75,13 @@ class StringMap():
         # return a dictionary that maps the sorted unique strings to integer values from [0,n-1]
         return dict(zip(unique_strings, range(len(unique_strings))))
 
-    def convert(self, value: str) -> float:
-        return self.mapping[value]
+    def map_data(self, data: list[Any]) -> list[float]:
+        mapped_data = super().map_data(data)
+        mapped_data = [mapped_data[i] / (len(self.mapping) - 1) for i in range(len(mapped_data))]
 
-class IntMap():
+        return mapped_data
+
+class IntMap(BaseMap[int]):
     """
     Map integer values to float values.
 
@@ -79,23 +96,20 @@ class IntMap():
         Dictionary mapping integer values to float values.
     """
     def __init__(self, data: list[int]) -> None:
-        min_val, max_val, _ = self._normalize_range(data)
-        self.mapping = {value: (value - min_val) / (max_val - min_val) for value in data}
-        self.mapping = dict(sorted(self.mapping.items()))
+        min_val, max_val = self._normalize_range(data)
+        mapping = {value: (value - min_val) / (max_val - min_val) for value in data}
+        mapping = dict(sorted(mapping.items()))
 
-        self.mapped_data = [self.convert(value) for value in data]
-
-        self.yticks = list(self.mapping.values())
-        self.yticklabels = list(self.mapping.keys())
+        super().__init__(data, mapping)
 
     @staticmethod
-    def _normalize_range(data: list[int]) -> tuple[int, int, int]:
+    def _normalize_range(data: list[int]) -> tuple[int, int]:
         return _normalize_range(data)
 
     def convert(self, value: int) -> float:
         return self.mapping[value]
 
-class FloatMap():
+class FloatMap(BaseMap):
     """
     Map float values to float values.
 
@@ -105,31 +119,35 @@ class FloatMap():
         Dictionary mapping float values to float values.
     """
     def __init__(self, data: list[float]) -> None:
-        self.__min_val, max_val, self.__min_max_range = self._normalize_range(data)
-
-        self.mapping = {value: (value - self.__min_val) / self.__min_max_range for value in data}
-        self.mapped_data = [self.convert(value) for value in data]
-
-        locator = MaxNLocator(nbins=5)
-        ticks = locator.tick_values(vmin=self.__min_val, vmax=max_val)
-
-        self.yticks = [self.convert(tick) for tick in ticks]
-        self.yticklabels = [round(tick, 6) for tick in ticks]
+        self.__min_val, self.__max_val = self._normalize_range(data)
+        mapping = {value: (value - self.__min_val) / (self.__max_val - self.__min_val) for value in data}
+        
+        super().__init__(data, mapping)
 
     @staticmethod
     def _normalize_range(data: list[float]) -> tuple[float, float, float]:
         return _normalize_range(data)
+    
+    def map_data(self, data):
+        return [self.convert(value) for value in data]
+
+    def _set_yticks(self) -> tuple[list[float], list[T]]:
+        locator = MaxNLocator(nbins='auto')
+        ticks = locator.tick_values(vmin=self.__min_val, vmax=self.__max_val)
+
+        yticks = [self.convert(tick) for tick in ticks]
+        yticklabels = [round(tick, 6) for tick in ticks]
+
+        return yticks, yticklabels
 
     def convert(self, value: float) -> float:
-        return (value - self.__min_val) / self.__min_max_range
+        return (value - self.__min_val) / (self.__max_val - self.__min_val)
 
-
-def _normalize_range(data: list[Any]) -> tuple[Any, Any, Any]:
+def _normalize_range(data: list[Any]) -> tuple[Any, Any]:
     # determine the min and max values of the column, and the range
     min_val, max_val = min(data), max(data)
     if min_val == max_val:
         min_val -= 0.5
         max_val += 0.5
-    min_max_range = max_val - min_val
 
-    return min_val, max_val, min_max_range
+    return min_val, max_val

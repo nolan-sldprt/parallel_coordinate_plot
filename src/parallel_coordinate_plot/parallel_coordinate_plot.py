@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from parallel_coordinate_plot.data_mapping import BoolMap, FloatMap, IntMap, StringMap
-from parallel_coordinate_plot.utils import _get_plot_style
+from parallel_coordinate_plot.core import _get_plot_style
 
 __all__ = [
     "map_string_to_int",

@@ -4,7 +4,11 @@ A Python package for producing parallel coordinate plots.
 
 The following example was generated using ```examples/demo.py```.
 
-![image info](./examples/animals.png)
+<img
+    src="./examples/animals.png"
+    alt="Example parallel coordinate plot that compares various animals."
+    width="470"
+/>
 
 ## Rationale
 
