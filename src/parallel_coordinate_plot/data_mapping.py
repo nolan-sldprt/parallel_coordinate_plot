@@ -87,7 +87,7 @@ class StringMap(BaseMap[str]):
 
         return mapped_data
 
-class IntMap(BaseMap):
+class IntMap(BaseMap[int]):
     """
     Map integer values to float values.
 
@@ -103,13 +103,10 @@ class IntMap(BaseMap):
     """
     def __init__(self, data: list[int]) -> None:
         min_val, max_val, _ = self._normalize_range(data)
-        self.mapping = {value: (value - min_val) / (max_val - min_val) for value in data}
-        self.mapping = dict(sorted(self.mapping.items()))
+        mapping = {value: (value - min_val) / (max_val - min_val) for value in data}
+        mapping = dict(sorted(mapping.items()))
 
-        self.mapped_data = [self.convert(value) for value in data]
-
-        self.yticks = list(self.mapping.values())
-        self.yticklabels = list(self.mapping.keys())
+        super().__init__(data, mapping)
 
     @staticmethod
     def _normalize_range(data: list[int]) -> tuple[int, int, int]:
