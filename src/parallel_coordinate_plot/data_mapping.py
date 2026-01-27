@@ -1,7 +1,9 @@
-from typing import Any, Generic
+from typing import Any, Generic, TypeVar
 from matplotlib.ticker import MaxNLocator
 
 from parallel_coordinate_plot.core import T
+
+D = TypeVar('D', int, float)
 
 class BaseMap(Generic[T]):
     """
@@ -108,7 +110,7 @@ class IntMap(BaseMap[int]):
     def convert(self, value: int) -> float:
         return self.mapping[value]
 
-class FloatMap(BaseMap):
+class FloatMap(BaseMap[float]):
     """
     Map float values to float values.
 
@@ -126,9 +128,6 @@ class FloatMap(BaseMap):
     @staticmethod
     def _normalize_range(data: list[float]) -> tuple[float, float, float]:
         return _normalize_range(data)
-    
-    def map_data(self, data):
-        return [self.convert(value) for value in data]
 
     def _set_yticks(self) -> tuple[list[float], list[T]]:
         locator = MaxNLocator(nbins='auto')
@@ -142,7 +141,7 @@ class FloatMap(BaseMap):
     def convert(self, value: float) -> float:
         return (value - self.__min_val) / (self.__max_val - self.__min_val)
 
-def _normalize_range(data: list[Any]) -> tuple[Any, Any]:
+def _normalize_range(data: list[D]) -> tuple[D, D]:
     # determine the min and max values of the column, and the range
     min_val, max_val = min(data), max(data)
     if min_val == max_val:
