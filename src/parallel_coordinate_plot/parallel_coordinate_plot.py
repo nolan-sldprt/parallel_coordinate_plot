@@ -93,9 +93,6 @@ def plot(
                 clip_on=False,
             )
 
-        # set the yticklabels to be above the ticks
-        plt.setp(ax.get_yticklabels(), va="bottom")
-
         ax.set_xlim([i,i+1])
         ax.set_xticks([i,i+1])
     
@@ -115,6 +112,9 @@ def plot(
         ax.set_ylim([0,1])
         ax.set_yticks(np.linspace(0,1, len(content_modifiers[i].yticks)))
         ax.set_yticklabels(content_modifiers[i].yticklabels)
+
+        # set the yticklabels to be above the ticks
+        plt.setp(ax.get_yticklabels(), va="bottom")
 
     if title != 'none':
         fig.suptitle(title)

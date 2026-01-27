@@ -7,7 +7,7 @@ The following example was generated using ```examples/demo.py```.
 <img
     src="./examples/animals.png"
     alt="Example parallel coordinate plot that compares various animals."
-    width="470"
+    width="650"
 />
 
 ## Rationale
