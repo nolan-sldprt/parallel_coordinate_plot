@@ -1,6 +1,39 @@
 import pytest
 
-import parallel_coordinate_plot
+from parallel_coordinate_plot import data_mapping
+
+expected_bool_mapping = {
+    True: 1.0,
+    False: 0.0
+}
+@pytest.mark.parametrize("input_data, expected_output",
+    [
+        (
+            [True],
+            expected_bool_mapping
+        ),
+        (
+            [False],
+            expected_bool_mapping
+        ),
+        (
+            [True, True, True, True, True],
+            expected_bool_mapping
+        ),
+        (
+            [False, False, False, False],
+            expected_bool_mapping
+        ),
+        (
+            [True, False, True, False, True],
+            expected_bool_mapping
+        ),
+    ]
+)
+def test_bool_mapping(input_data, expected_output):
+    input_data_map = data_mapping.BoolMap(input_data)
+
+    assert input_data_map.mapping == expected_output
 
 @pytest.mark.parametrize("input_data, expected_output",
     [
@@ -28,5 +61,7 @@ import parallel_coordinate_plot
         ),
     ]
 )
-def test_mapping(input_data, expected_output):
-    assert parallel_coordinate_plot.map_string_to_int(input_data) == expected_output
+def test_string_mapping(input_data, expected_output):
+    input_data_map = data_mapping.StringMap(input_data)
+
+    assert input_data_map.mapping == expected_output
