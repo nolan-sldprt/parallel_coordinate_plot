@@ -30,7 +30,7 @@ def _get_plot_style(i: int) -> tuple[str, str, str]:
     """
 
     styles_lines = ['-', '--', '-.', ':']
-    styles_colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'darkorange', 'indigo', 'rosybrown', 'darkslategrey', 'springgreen', 'darkgoldenrod', 'hotpink']#, 'palevioletred']
-    styles_markers = ['o', 'v', '^', '>', 's', 'D', '*', 'h', 'X', 'd']
+    styles_colours = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'darkorange', 'indigo', 'rosybrown', 'darkslategrey', 'springgreen', 'darkgoldenrod', 'hotpink', 'palevioletred']
+    styles_markers = ['o', 'v', '^', '<', '>', 's', 'p', 'P', 'D', '*', 'h', 'X', 'd']
 
     return styles_lines[i % len(styles_lines)], styles_colours[i % len(styles_colours)], styles_markers[i % len(styles_markers)]
