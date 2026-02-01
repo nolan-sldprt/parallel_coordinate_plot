@@ -12,13 +12,15 @@ def main():
         "snake": [0, 0, 1, 0.6, "green", 1, False],
         "gorilla": [2, 2, 1, 1.5, "black", 0, False],
         "fish": [0, 0, 1, 0.3, "grey", 1, True],
+        "nurse shark": [0, 0, 1, 2.5, "brown", 1, True]
     }
 
     parallel_coordinate_plot.plot(
         headers,
         content,
         legend=True,
-        title='Animals'
+        title='Animals',
+        markersize=10
     )
 
     plt.show()

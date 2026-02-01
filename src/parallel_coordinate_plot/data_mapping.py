@@ -122,9 +122,15 @@ class FloatMap(BaseMap[float]):
     def __init__(self, data: list[float]) -> None:
         self.__min_val, self.__max_val = self._normalize_range(data)
         mapping = {value: (value - self.__min_val) / (self.__max_val - self.__min_val) for value in data}
-        
+        # initialize the base class with currently known min-max range
         super().__init__(data, mapping)
 
+        # reinitialize base class to update mapping and mapped_data with final
+        # min-max range after considering yticklabels
+        self.__min_val = min(self.__min_val, min(self.yticklabels))
+        self.__max_val = max(self.__max_val, max(self.yticklabels))
+        super().__init__(data, mapping)
+    
     @staticmethod
     def _normalize_range(data: list[float]) -> tuple[float, float, float]:
         return _normalize_range(data)
